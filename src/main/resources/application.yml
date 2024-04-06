@@ -1,0 +1,14 @@
+server:
+  jetty:
+    threads:
+      selectors: 8
+      acceptors: 4
+  port: 8090
+  servlet:
+    context-path: /emos
+
+spring:
+  application:
+    name: emos-api
+  profiles:
+    active: dev

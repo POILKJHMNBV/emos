@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.emos.db.dao.TbUserOperateLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.emos.db.pojo.TbUserOperateLog">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="operationDescription" column="operation_description" jdbcType="VARCHAR"/>
+            <result property="requestUri" column="request_uri" jdbcType="VARCHAR"/>
+            <result property="requestMethod" column="request_method" jdbcType="VARCHAR"/>
+            <result property="requestIp" column="request_ip" jdbcType="VARCHAR"/>
+            <result property="requestParameter" column="request_parameter" jdbcType="OTHER"/>
+            <result property="responseStatus" column="response_status" jdbcType="INTEGER"/>
+            <result property="costTime" column="cost_time" jdbcType="INTEGER"/>
+            <result property="errorReason" column="error_reason" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,operation_description,
+        request_uri,request_method,request_ip,
+        request_parameter,response_status,cost_time,
+        error_reason,create_time
+    </sql>
+</mapper>

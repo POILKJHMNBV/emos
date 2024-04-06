@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.emos.db.dao.TbLeaveMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.emos.db.pojo.TbLeave">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="userId" column="user_id" jdbcType="INTEGER"/>
+            <result property="reason" column="reason" jdbcType="VARCHAR"/>
+            <result property="start" column="start" jdbcType="TIMESTAMP"/>
+            <result property="end" column="end" jdbcType="TIMESTAMP"/>
+            <result property="days" column="days" jdbcType="VARCHAR"/>
+            <result property="type" column="type" jdbcType="TINYINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="instanceId" column="instance_id" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,reason,
+        start,end,days,
+        type,status,instance_id,
+        create_time
+    </sql>
+    <select id="searchLeaveByPage" parameterType="hashmap" resultType="hashmap">
+        SELECT l.id,
+               u.id AS userId,
+               u.`name`,
+               d.dept_name AS deptName,
+               DATE_FORMAT(l.`start`,'%Y-%m-%d %H:%i') AS `start`,
+               DATE_FORMAT(l.`end`,'%Y-%m-%d %H:%i') AS `end`,
+               l.type,
+               l.`status`,
+               l.reason,
+               l.instance_id AS instanceId,
+               IF(u.id = #{currentUserId}, true, false) AS mine
+        FROM tb_leave l
+        JOIN tb_user u ON l.user_id = u.id
+        LEFT JOIN tb_dept d ON u.dept_id = d.id
+        <where>
+            <if test="userId != null">
+                AND u.dept_id = (SELECT dept_id FROM tb_user WHERE id = #{userId})
+            </if>
+            <if test="name != null">
+                AND u.name LIKE '%${name}%'
+            </if>
+            <if test="deptId != null">
+                AND d.id = #{deptId}
+            </if>
+            <if test="date != null">
+                AND #{date} BETWEEN DATE_FORMAT(l.`start`,'%Y-%m-%d') AND DATE_FORMAT(l.`end`,'%Y-%m-%d')
+            </if>
+            <if test="status != null">
+                AND l.status = #{status}
+            </if>
+            <if test="type != null">
+                AND l.type = #{type}
+            </if>
+        </where>
+        ORDER BY l.id
+        LIMIT #{start}, #{length}
+    </select>
+    <select id="searchLeaveCount" parameterType="hashmap" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_leave l
+        JOIN tb_user u ON l.user_id = u.id
+        LEFT JOIN tb_dept d ON u.dept_id = d.id
+        <where>
+            <if test="userId != null">
+                AND u.dept_id = (SELECT dept_id FROM tb_user WHERE id = #{userId})
+            </if>
+            <if test="name != null">
+                AND u.name LIKE '%${name}%'
+            </if>
+            <if test="deptId != null">
+                AND d.id = #{deptId}
+            </if>
+            <if test="date != null">
+                AND #{date} BETWEEN DATE_FORMAT(l.`start`,'%Y-%m-%d') AND DATE_FORMAT(l.`end`,'%Y-%m-%d')
+            </if>
+            <if test="status != null">
+                AND l.status = #{status}
+            </if>
+            <if test="type != null">
+                AND l.type = #{type}
+            </if>
+        </where>
+    </select>
+    <select id="searchLeaveById" parameterType="hashmap" resultType="hashmap">
+        SELECT
+            u.name,
+            u.sex,
+            d.dept_name AS dept,
+            l.type,
+            DATE_FORMAT(l.`start`, '%Y-%m-%d %H:%i') AS `start`,
+            DATE_FORMAT(l.`end`, '%Y-%m-%d %H:%i') AS `end`,
+            l.reason
+        FROM tb_leave l
+        JOIN tb_user u ON l.user_id = u.id
+        JOIN tb_dept d ON u.dept_id = d.id
+        WHERE l.id = #{leaveId}
+        <if test="userId!=null">
+            AND u.id = #{userId}
+        </if>
+    </select>
+    <select id="searchContradiction" parameterType="java.util.Map" resultType="long">
+        SELECT COUNT(*)
+        FROM tb_leave
+        WHERE user_id = #{userId} AND
+             `status` != 2 AND
+             ((#{start} BETWEEN `start` AND `end`) OR (#{end} BETWEEN `start` AND `end`))
+    </select>
+    <update id="updateLeaveInstanceId" parameterType="java.util.Map">
+        UPDATE tb_leave SET instance_id = #{instanceId} WHERE id = #{leaveId}
+    </update>
+    <delete id="deleteLeaveById" parameterType="hashmap">
+        DELETE FROM tb_leave
+        WHERE id = #{leaveId}
+          AND user_id = #{userId}
+          AND status IN(1,2)
+    </delete>
+</mapper>

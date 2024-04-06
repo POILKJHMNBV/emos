@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.emos.db.dao.TbMeetingRoomMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.emos.db.pojo.TbMeetingRoom">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="max" column="max" jdbcType="SMALLINT"/>
+            <result property="desc" column="desc" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,name,max,
+        desc,status
+    </sql>
+
+    <select id="searchMeetingRoomByPage" parameterType="hashmap" resultType="hashmap">
+        SELECT
+            r.id,
+            r.name,
+            r.max,
+            r.`desc`,
+            r.status,
+            COUNT(m.id) AS meetings
+        FROM tb_meeting_room r LEFT JOIN tb_meeting m ON r.name = m.place
+        <where>
+            <if test="name != null">
+                r.name LIKE '%${name}%'
+            </if>
+        </where>
+        GROUP BY r.id
+        <if test="canDelete == true">
+            HAVING meetings = 0
+        </if>
+        <if test="canDelete == false">
+            HAVING meetings > 0
+        </if>
+        ORDER BY r.max
+        LIMIT #{start}, #{length}
+    </select>
+    <select id="searchMeetingRoomCount" parameterType="hashmap" resultType="long">
+        SELECT COUNT(*) FROM (SELECT
+            r.id
+        FROM tb_meeting_room r LEFT JOIN tb_meeting m ON r.name = m.place
+        <where>
+            <if test="name != null">
+                r.name = #{name}
+            </if>
+        </where>
+        GROUP BY r.id
+        <if test="canDelete == true">
+            HAVING COUNT(m.id) = 0
+        </if>
+        <if test="canDelete == false">
+            HAVING COUNT(m.id) > 0
+        </if>
+        ) AS tmp
+    </select>
+    <select id="searchById" parameterType="int" resultType="hashmap">
+        SELECT
+            name,
+            max,
+            `desc`,
+            `status`
+        FROM tb_meeting_room
+        WHERE id = #{meetingRoomId}
+    </select>
+    <select id="searchFreeMeetingRoom" parameterType="hashmap" resultType="string">
+        SELECT name FROM tb_meeting_room
+        WHERE name NOT IN
+              (
+                  SELECT place FROM tb_meeting
+                  WHERE date = #{date}
+                    AND ((start BETWEEN #{start} AND #{end}) OR (end BETWEEN #{start} AND #{end}))
+                    AND place is NOT NULL
+              )
+      AND `status` = 1
+    </select>
+    <update id="update" parameterType="com.example.emos.db.pojo.TbMeetingRoom">
+        UPDATE tb_meeting_room
+        SET
+            name = #{name},
+            max = #{max},
+        <if test="desc != null">
+            `desc` = #{desc},
+        </if>
+            `status` = #{status}
+        WHERE id = #{id}
+    </update>
+    <insert id="insert" parameterType="com.example.emos.db.pojo.TbMeetingRoom">
+        INSERT INTO tb_meeting_room
+        SET
+            name = #{name},
+            max = #{max},
+        <if test="desc != null">
+            `desc` = #{desc},
+        </if>
+            `status` = #{status}
+    </insert>
+    <select id="searchMeetingRoomIfExistRelativeMeeting" resultType="boolean">
+        SELECT IF(SUM(meetings) > 0, TRUE, FALSE)
+        FROM (SELECT COUNT(m.id) AS meetings
+            FROM tb_meeting_room r JOIN tb_meeting m ON r.name = m.place
+            WHERE r.id IN
+            <foreach collection="array" open="(" separator="," close=")" item="meetingRoomId">
+                #{meetingRoomId}
+            </foreach>
+            GROUP BY r.id) AS tmp
+    </select>
+    <delete id="deleteMeetingRoomByIds">
+        DELETE FROM tb_meeting_room
+        WHERE id IN
+        <foreach collection="array" open="(" separator="," close=")" item="meetingRoomId">
+            #{meetingRoomId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.emos.db.dao.TbDeptMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.emos.db.pojo.TbDept">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="deptName" column="dept_name" jdbcType="VARCHAR"/>
+            <result property="tel" column="tel" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="desc" column="desc" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,dept_name,tel,
+        email,desc
+    </sql>
+
+    <select id="searchDeptByPage" parameterType="Hashmap" resultType="Hashmap">
+        SELECT
+            id,
+            deptName,
+            tel,
+            email,
+            COUNT(user_id) AS emps,
+            `desc`
+        FROM (SELECT
+                d.id,
+                d.dept_name AS deptName,
+                d.tel,
+                d.email,
+                d.`desc`,
+                u.id AS user_id,
+                u.status
+        FROM tb_dept d LEFT JOIN tb_user u ON u.dept_id = d.id
+        <where>
+            <if test="deptName != null">
+                d.dept_name LIKE '%${deptName}%'
+            </if>
+        </where>) AS tmp
+        WHERE status = 1 OR status IS NULL
+        GROUP BY id
+        LIMIT #{start}, #{length}
+    </select>
+    <select id="searchDeptCount" parameterType="Hashmap" resultType="long">
+        SELECT COUNT(*) FROM (SELECT
+            id,
+            deptName,
+            tel,
+            email,
+            COUNT(user_id) AS emps,
+            `desc`
+        FROM (SELECT
+                d.id,
+                d.dept_name AS deptName,
+                d.tel,
+                d.email,
+                d.`desc`,
+                u.id AS user_id,
+                u.status
+        FROM tb_dept d LEFT JOIN tb_user u ON u.dept_id = d.id
+        <where>
+            <if test="deptName != null">
+                d.dept_name LIKE '%${deptName}%'
+            </if>
+        </where>) AS tmp
+        WHERE status = 1 OR status IS NULL
+        GROUP BY id) AS temp
+    </select>
+    <update id="update" parameterType="com.example.emos.db.pojo.TbDept">
+        UPDATE tb_dept
+        SET dept_name = #{deptName}
+        <if test="tel != null">
+            ,tel = #{tel}
+        </if>
+        <if test="email != null">
+            ,email = #{email}
+        </if>
+        <if test="desc != null">
+            ,`desc` = #{desc}
+        </if>
+        WHERE id = #{id}
+    </update>
+    <insert id="insert" parameterType="com.example.emos.db.pojo.TbDept">
+        INSERT INTO tb_dept
+        SET dept_name = #{deptName}
+        <if test="tel != null">
+            ,tel = #{tel}
+        </if>
+        <if test="email != null">
+            ,email = #{email}
+        </if>
+        <if test="desc != null">
+            ,`desc` = #{desc}
+        </if>
+    </insert>
+    <select id="searchDeptIfExistRelativeUser" resultType="boolean">
+        SELECT IF(SUM(users) > 0, TRUE, FALSE)
+        FROM (SELECT COUNT(u.id) AS users
+              FROM tb_dept d JOIN tb_user u ON d.id = u.dept_id
+              WHERE d.id IN
+              <foreach collection="array" open="(" separator="," close=")"  item="deptId">
+                  #{deptId}
+              </foreach>
+              GROUP BY d.id) AS tmp
+    </select>
+    <delete id="deleteDeptByIds">
+        DELETE FROM tb_dept
+        WHERE id IN
+        <foreach collection="array" open="(" separator="," close=")"  item="deptId">
+            #{deptId}
+        </foreach>
+    </delete>
+</mapper>
