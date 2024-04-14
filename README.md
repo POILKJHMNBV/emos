@@ -4,8 +4,8 @@ EMOS在线办公系统为专业的企业级在线办公系统，基于SpringBoot
 
 # 项目演示
 
-前端项目`emos-vue`地址：https://github.com/POILKJHMNBV/emos-vue
-工作流项目`workflow`地址：https://github.com/POILKJHMNBV/workflow
+* 前端项目`emos-vue`地址：https://github.com/POILKJHMNBV/emos-vue
+* 工作流项目`workflow`地址：https://github.com/POILKJHMNBV/workflow
 
 # 管理员界面
 
